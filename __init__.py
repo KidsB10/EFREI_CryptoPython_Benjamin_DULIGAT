@@ -9,22 +9,31 @@ app = Flask(__name__)
                                                                                                                                        
 @app.route('/')
 def hello_world():
-    return render_template('hello.html') # Hello World!
+    return render_template('hello.html')  # Page d'accueil
 
-key = Fernet.generate_key()
-f = Fernet(key)
+# Chiffrement avec clé utilisateur
+@app.route('/encrypt/<key>/<valeur>')
+def encryptage(key, valeur):
+    try:
+        f = Fernet(key.encode())
+        valeur_bytes = valeur.encode()
+        token = f.encrypt(valeur_bytes)
+        return f"Valeur encryptée : {token.decode()}"
+    except Exception as e:
+        return f"Erreur lors du chiffrement : {str(e)}"
 
-@app.route('/encrypt/<string:valeur>')
-def encryptage(valeur):
-    valeur_bytes = valeur.encode()  # Conversion str -> bytes
-    token = f.encrypt(valeur_bytes)  # Encrypte la valeur
-    return f"Valeur encryptée : {token.decode()}"  # Retourne le token en str
-
-@app.route('/decrypt/<string:valeur>')
-def decryptage(valeur):
-    valeur_bytes = valeur.encode()  # Conversion str -> bytes
-    token = f.decrypt(valeur_bytes)  # Decrypte la valeur
-    return f"Valeur décryptée : {token.decode()}"  # Retourne le token en str
+# Déchiffrement avec clé utilisateur
+@app.route('/decrypt/<key>/<valeur>')
+def decryptage(key, valeur):
+    try:
+        f = Fernet(key.encode())
+        valeur_bytes = valeur.encode()
+        valeur_decryptee = f.decrypt(valeur_bytes)
+        return f"Valeur décryptée : {valeur_decryptee.decode()}"
+    except InvalidToken:
+        return "Clé incorrecte ou token invalide !"
+    except Exception as e:
+        return f"Erreur lors du déchiffrement : {str(e)}"
 
 if __name__ == "__main__":
-  app.run(debug=True)
+    app.run(debug=True)
